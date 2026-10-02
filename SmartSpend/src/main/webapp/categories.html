@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Categories — SmartSpend</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-title">Smart<span>Spend</span></div>
+        <div class="brand-subtitle">Personal Expense & Budget System</div>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html" class="nav-link">📊 Dashboard</a></li>
+        <li><a href="expenses.html" class="nav-link">💸 Expenses</a></li>
+        <li><a href="budget.html" class="nav-link">🎯 Budget</a></li>
+        <li><a href="reports.html" class="nav-link">📈 Reports</a></li>
+        <li><a href="categories.html" class="nav-link active">🏷️ Categories</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <a href="logout" class="btn btn-secondary" style="width: 100%; font-size: 0.85rem;">🚪 Logout</a>
+      </div>
+    </aside>
+
+    <main class="main-wrapper">
+      <header class="topbar">
+        <div>
+          <h1 class="page-title">Expense Categories</h1>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">Manage default system categories and personalized custom categories</p>
+        </div>
+      </header>
+
+      <section class="content-body">
+        <div id="catAlert" style="display: none;"></div>
+
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem; align-items: flex-start;">
+          <!-- Add Category Form -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Add Custom Category</h2>
+            </div>
+            <form id="addCategoryForm">
+              <div class="form-group">
+                <label class="form-label" for="categoryName">Category Name</label>
+                <input type="text" id="categoryName" class="form-control" placeholder="e.g. Subscriptions, Fitness, Pet Care" required>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width: 100%;">Create Category</button>
+            </form>
+          </div>
+
+          <!-- Categories List -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Available Categories</h2>
+              <span id="catTotalBadge" class="badge badge-normal">0 Categories</span>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Category ID</th>
+                    <th>Category Name</th>
+                    <th>Scope</th>
+                  </tr>
+                </thead>
+                <tbody id="categoryTableBody">
+                  <tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Loading categories...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    async function loadCategories() {
+      try {
+        const res = await fetch('api/categories');
+        const list = await res.json();
+        const tbody = document.getElementById('categoryTableBody');
+        const badge = document.getElementById('catTotalBadge');
+        badge.textContent = `${list.length} Categories`;
+
+        if (!list || list.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 1.5rem;">No categories found.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = list.map(c => `
+          <tr>
+            <td>#${c.categoryId}</td>
+            <td><strong>${c.categoryName}</strong></td>
+            <td>
+              <span class="badge ${c.userId ? 'badge-warning' : 'badge-normal'}">
+                ${c.userId ? 'Custom (Your Account)' : 'Default (System)'}
+              </span>
+            </td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        console.error('Error fetching categories:', e);
+      }
+    }
+
+    document.getElementById('addCategoryForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('categoryName').value;
+      const alertBox = document.getElementById('catAlert');
+
+      const params = new URLSearchParams();
+      params.append('categoryName', name);
+
+      try {
+        const res = await fetch('api/categories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: params.toString()
+        });
+        const data = await res.json();
+        if (data.success) {
+          alertBox.className = 'alert alert-success';
+          alertBox.textContent = 'Category created successfully!';
+          alertBox.style.display = 'block';
+          document.getElementById('categoryName').value = '';
+          loadCategories();
+          setTimeout(() => { alertBox.style.display = 'none'; }, 3000);
+        } else {
+          alertBox.className = 'alert alert-danger';
+          alertBox.textContent = data.error || 'Failed to add category.';
+          alertBox.style.display = 'block';
+        }
+      } catch (err) {
+        alertBox.className = 'alert alert-danger';
+        alertBox.textContent = 'Network or server error.';
+        alertBox.style.display = 'block';
+      }
+    });
+
+    loadCategories();
+  </script>
+</body>
+</html>

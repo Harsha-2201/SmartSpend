@@ -1,0 +1,6 @@
+{
+  "name": "SmartSpend - Personal Expense & Budget Management System",
+  "description": "Complete functional Personal Expense & Budget Management System with real-time Chart.js circular pie chart, dynamic monthly budget utilization, expense CRUD, multi-user isolation, and CSV data export.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

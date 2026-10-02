@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register — SmartSpend</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1 class="auth-brand">SmartSpend</h1>
+        <p class="auth-subtitle">Personal Expense & Budget Management System</p>
+        <h2 class="auth-title">Create New Account</h2>
+      </div>
+
+      <div id="alertMessage" style="display: none;"></div>
+
+      <form action="register" method="POST" id="registerForm" onsubmit="return validateForm()">
+        <div class="form-group">
+          <label for="name" class="form-label">Full Name</label>
+          <input type="text" id="name" name="name" class="form-control" placeholder="e.g. John Doe" required>
+        </div>
+
+        <div class="form-group">
+          <label for="email" class="form-label">Email Address</label>
+          <input type="email" id="email" name="email" class="form-control" placeholder="name@example.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="form-label">Password</label>
+          <input type="password" id="password" name="password" class="form-control" placeholder="Minimum 6 characters" required minlength="6">
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword" class="form-label">Confirm Password</label>
+          <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" placeholder="Re-enter password" required minlength="6">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+          Register Account
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        Already registered? <a href="login.html">Sign in here</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const alertBox = document.getElementById('alertMessage');
+    
+    if (params.has('error')) {
+      alertBox.className = 'alert alert-danger';
+      alertBox.textContent = decodeURIComponent(params.get('error'));
+      alertBox.style.display = 'block';
+    }
+
+    function validateForm() {
+      const pwd = document.getElementById('password').value;
+      const cpwd = document.getElementById('confirmPassword').value;
+      if (pwd !== cpwd) {
+        alertBox.className = 'alert alert-danger';
+        alertBox.textContent = 'Passwords do not match!';
+        alertBox.style.display = 'block';
+        return false;
+      }
+      return true;
+    }
+  </script>
+</body>
+</html>

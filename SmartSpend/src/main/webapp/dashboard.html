@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — SmartSpend</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-title">Smart<span>Spend</span></div>
+        <div class="brand-subtitle">Personal Expense & Budget System</div>
+      </div>
+
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html" class="nav-link active">📊 Dashboard</a></li>
+        <li><a href="expenses.html" class="nav-link">💸 Expenses</a></li>
+        <li><a href="budget.html" class="nav-link">🎯 Budget</a></li>
+        <li><a href="reports.html" class="nav-link">📈 Reports</a></li>
+        <li><a href="categories.html" class="nav-link">🏷️ Categories</a></li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <a href="logout" class="btn btn-secondary" style="width: 100%; font-size: 0.85rem;">
+          🚪 Logout
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-wrapper">
+      <!-- Topbar Header -->
+      <header class="topbar">
+        <div>
+          <h1 class="page-title">Financial Dashboard</h1>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">Overview of your monthly budget, spending, and expense breakdown</p>
+        </div>
+
+        <div class="user-badge">
+          <div class="user-avatar" id="userInitial">U</div>
+          <div class="user-info">
+            <div class="name" id="userNameLabel">Loading...</div>
+            <div class="role" id="userEmailLabel">User</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Content Body -->
+      <section class="content-body">
+        <!-- Month and Year Period Selector -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <label style="font-weight: 600; font-size: 0.9rem;">Select Period:</label>
+            <select id="selectMonth" class="form-control" style="width: auto;">
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10" selected>October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+            <select id="selectYear" class="form-control" style="width: auto;">
+              <option value="2025">2025</option>
+              <option value="2026" selected>2026</option>
+              <option value="2027">2027</option>
+            </select>
+            <button id="btnFilterPeriod" class="btn btn-primary" style="padding: 0.5rem 1rem;">Apply</button>
+          </div>
+
+          <div>
+            <a href="add-expense.html" class="btn btn-primary">➕ Add Expense</a>
+          </div>
+        </div>
+
+        <!-- 4 Summary Cards -->
+        <div class="stats-grid">
+          <div class="stat-card budget">
+            <div class="stat-label">Monthly Budget</div>
+            <div class="stat-value" id="valBudget">₹0</div>
+            <div class="stat-meta" id="budgetMeta">Budget configured for period</div>
+          </div>
+
+          <div class="stat-card spent">
+            <div class="stat-label">Total Spent</div>
+            <div class="stat-value" id="valSpent">₹0</div>
+            <div class="stat-meta" id="spentMeta">Total monthly expenditure</div>
+          </div>
+
+          <div class="stat-card remaining">
+            <div class="stat-label">Remaining Budget</div>
+            <div class="stat-value" id="valRemaining">₹0</div>
+            <div class="stat-meta" id="remainingMeta">Surplus available</div>
+          </div>
+
+          <div class="stat-card count">
+            <div class="stat-label">Number of Expenses</div>
+            <div class="stat-value" id="valCount">0</div>
+            <div class="stat-meta">Recorded transactions</div>
+          </div>
+        </div>
+
+        <!-- Budget Usage Bar Alert -->
+        <div class="card" style="padding: 1.25rem; margin-bottom: 2rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <span style="font-weight: 600; font-size: 0.95rem;">Budget Usage Status</span>
+            <span id="budgetStatusBadge" class="badge badge-normal">Normal</span>
+          </div>
+          <div class="progress-bar-container">
+            <div id="budgetProgressFill" class="progress-bar-fill normal" style="width: 0%;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
+            <span id="usagePercentText">0% of budget utilized</span>
+            <span>Threshold: Normal &lt;75% | Warning 75-89% | Critical 90-100% | Exceeded &gt;100%</span>
+          </div>
+        </div>
+
+        <!-- Financial Tips Section (Displayed only in Warning or Critical budget state) -->
+        <div id="financialTipsSection" class="card" style="display: none; background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 1px solid #fde68a; padding: 1.5rem; margin-bottom: 2rem;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.25rem;">💡</span>
+                <h2 style="font-size: 1.1rem; font-weight: 700; color: #78350f;">Smart Financial Tips &amp; Pacing Guide</h2>
+                <span id="tipStatusBadge" class="badge badge-warning">Warning State</span>
+              </div>
+              <p id="tipStatusDesc" style="font-size: 0.825rem; color: #92400e; margin-top: 0.25rem;">
+                Actionable recommendations to help you pace expenditures and stay within your monthly ceiling.
+              </p>
+            </div>
+            <div style="background: rgba(255,255,255,0.85); padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid #fcd34d;">
+              <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #b45309; display: block;">Remaining Allowance</span>
+              <strong id="tipRemainingVal" style="font-size: 1rem; color: #92400e;">₹0.00</strong>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+            <div style="background: rgba(255,255,255,0.9); padding: 1rem; border-radius: 8px; border: 1px solid #fde68a;">
+              <div style="font-weight: 700; font-size: 0.85rem; color: #78350f; margin-bottom: 0.35rem;">
+                1. Daily Pacing Ceiling
+              </div>
+              <p id="tipDailyText" style="font-size: 0.8rem; color: #4b5563; line-height: 1.5;">
+                Cap spending to prevent exhausting your remaining budget before the month ends.
+              </p>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.9); padding: 1rem; border-radius: 8px; border: 1px solid #fde68a;">
+              <div style="font-weight: 700; font-size: 0.85rem; color: #78350f; margin-bottom: 0.35rem;">
+                2. Freeze Discretionary Spends
+              </div>
+              <p id="tipDiscretionaryText" style="font-size: 0.8rem; color: #4b5563; line-height: 1.5;">
+                Postpone non-essential shopping, food delivery, and entertainment until next month's fresh allocation.
+              </p>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.9); padding: 1rem; border-radius: 8px; border: 1px solid #fde68a;">
+              <div style="font-weight: 700; font-size: 0.85rem; color: #78350f; margin-bottom: 0.35rem;">
+                3. The 24-Hour Rule
+              </div>
+              <p style="font-size: 0.8rem; color: #4b5563; line-height: 1.5;">
+                Wait 24 hours before any unplanned purchase exceeding ₹500. Most impulse desires disappear after cooling off.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Split Grid: Circular Pie Chart & Recent Expenses -->
+        <div class="dashboard-grid">
+          <!-- Circular Pie Chart Card -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Expense Distribution</h2>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">Circular Pie Chart</span>
+            </div>
+            <div class="chart-wrapper">
+              <canvas id="expensePieChart"></canvas>
+            </div>
+            <div id="noChartDataMsg" style="display: none; text-align: center; color: var(--text-muted); padding: 2rem;">
+              No expenses recorded for this month.
+            </div>
+          </div>
+
+          <!-- Recent Expenses Card -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Recent Expenses</h2>
+              <a href="expenses.html" style="font-size: 0.85rem;">View All →</a>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="recentExpensesTableBody">
+                  <tr>
+                    <td colspan="4" style="text-align: center; color: var(--text-muted);">Loading expenses...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

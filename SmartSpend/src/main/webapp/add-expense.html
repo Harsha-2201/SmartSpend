@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Expense — SmartSpend</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-title">Smart<span>Spend</span></div>
+        <div class="brand-subtitle">Personal Expense & Budget System</div>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html" class="nav-link">📊 Dashboard</a></li>
+        <li><a href="expenses.html" class="nav-link active">💸 Expenses</a></li>
+        <li><a href="budget.html" class="nav-link">🎯 Budget</a></li>
+        <li><a href="reports.html" class="nav-link">📈 Reports</a></li>
+        <li><a href="categories.html" class="nav-link">🏷️ Categories</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <a href="logout" class="btn btn-secondary" style="width: 100%; font-size: 0.85rem;">🚪 Logout</a>
+      </div>
+    </aside>
+
+    <main class="main-wrapper">
+      <header class="topbar">
+        <div>
+          <h1 class="page-title">Log New Expense</h1>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">Record daily expenses to keep your budget balanced</p>
+        </div>
+        <a href="expenses.html" class="btn btn-secondary">← Back to Expenses</a>
+      </header>
+
+      <section class="content-body" style="max-width: 600px;">
+        <div id="addAlert" style="display: none;"></div>
+
+        <div class="card">
+          <form id="addExpenseForm">
+            <div class="form-group">
+              <label class="form-label" for="amount">Amount (₹) *</label>
+              <input type="number" id="amount" name="amount" step="0.01" min="0.01" class="form-control" placeholder="e.g. 250.00" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="categorySelect">Category *</label>
+              <select id="categorySelect" name="categoryId" class="form-control" required>
+                <option value="">Loading categories...</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="description">Description *</label>
+              <input type="text" id="description" name="description" class="form-control" placeholder="e.g. Lunch at college cafeteria" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="expenseDate">Expense Date *</label>
+              <input type="date" id="expenseDate" name="expenseDate" class="form-control" required>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+              <button type="submit" class="btn btn-primary" style="flex: 1;">Save Expense</button>
+              <a href="expenses.html" class="btn btn-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // Set default date to today
+    document.getElementById('expenseDate').value = new Date().toISOString().split('T')[0];
+
+    // Load categories dynamically from Servlet API
+    fetch('api/categories')
+      .then(res => res.json())
+      .then(cats => {
+        const sel = document.getElementById('categorySelect');
+        sel.innerHTML = '<option value="">Select a category</option>';
+        cats.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.categoryId;
+          opt.textContent = c.categoryName;
+          sel.appendChild(opt);
+        });
+      })
+      .catch(err => {
+        console.error('Error fetching categories:', err);
+      });
+
+    // Handle form submit
+    document.getElementById('addExpenseForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const alertBox = document.getElementById('addAlert');
+      const amount = document.getElementById('amount').value;
+      const categoryId = document.getElementById('categorySelect').value;
+      const description = document.getElementById('description').value;
+      const expenseDate = document.getElementById('expenseDate').value;
+
+      if (!amount || parseFloat(amount) <= 0) {
+        alertBox.className = 'alert alert-danger';
+        alertBox.textContent = 'Amount must be greater than 0';
+        alertBox.style.display = 'block';
+        return;
+      }
+
+      const params = new URLSearchParams();
+      params.append('action', 'add');
+      params.append('amount', amount);
+      params.append('categoryId', categoryId);
+      params.append('description', description);
+      params.append('expenseDate', expenseDate);
+
+      try {
+        const res = await fetch('api/expenses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: params.toString()
+        });
+        const data = await res.json();
+        if (data.success) {
+          alertBox.className = 'alert alert-success';
+          alertBox.textContent = 'Expense saved successfully! Redirecting...';
+          alertBox.style.display = 'block';
+          setTimeout(() => {
+            window.location.href = 'expenses.html';
+          }, 1000);
+        } else {
+          alertBox.className = 'alert alert-danger';
+          alertBox.textContent = data.error || 'Failed to save expense';
+          alertBox.style.display = 'block';
+        }
+      } catch (err) {
+        alertBox.className = 'alert alert-danger';
+        alertBox.textContent = 'Network or server error while saving expense.';
+        alertBox.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

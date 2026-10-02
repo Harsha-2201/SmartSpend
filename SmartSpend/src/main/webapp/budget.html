@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monthly Budget — SmartSpend</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-title">Smart<span>Spend</span></div>
+        <div class="brand-subtitle">Personal Expense & Budget System</div>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html" class="nav-link">📊 Dashboard</a></li>
+        <li><a href="expenses.html" class="nav-link">💸 Expenses</a></li>
+        <li><a href="budget.html" class="nav-link active">🎯 Budget</a></li>
+        <li><a href="reports.html" class="nav-link">📈 Reports</a></li>
+        <li><a href="categories.html" class="nav-link">🏷️ Categories</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <a href="logout" class="btn btn-secondary" style="width: 100%; font-size: 0.85rem;">🚪 Logout</a>
+      </div>
+    </aside>
+
+    <main class="main-wrapper">
+      <header class="topbar">
+        <div>
+          <h1 class="page-title">Monthly Budget & Thresholds</h1>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">Set spending limits and monitor threshold alarms</p>
+        </div>
+      </header>
+
+      <section class="content-body">
+        <div id="budgetAlert" style="display: none;"></div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: flex-start;">
+          <!-- Budget Setting Form -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Set Monthly Budget</h2>
+            </div>
+            <form id="setBudgetForm">
+              <div class="form-group">
+                <label class="form-label" for="budgetMonth">Month</label>
+                <select id="budgetMonth" name="month" class="form-control" required>
+                  <option value="1">January</option>
+                  <option value="2">February</option>
+                  <option value="3">March</option>
+                  <option value="4">April</option>
+                  <option value="5">May</option>
+                  <option value="6">June</option>
+                  <option value="7">July</option>
+                  <option value="8">August</option>
+                  <option value="9">September</option>
+                  <option value="10" selected>October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="budgetYear">Year</label>
+                <select id="budgetYear" name="year" class="form-control" required>
+                  <option value="2025">2025</option>
+                  <option value="2026" selected>2026</option>
+                  <option value="2027">2027</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="budgetAmount">Budget Amount (₹)</label>
+                <input type="number" id="budgetAmount" name="amount" step="0.01" min="1" class="form-control" placeholder="e.g. 10000.00" required>
+              </div>
+
+              <button type="submit" class="btn btn-primary" style="width: 100%;">Save Budget</button>
+            </form>
+          </div>
+
+          <!-- Budget Health & Monitoring Card -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Budget Health & Usage</h2>
+              <span id="badgeStatusIndicator" class="badge badge-normal">Normal</span>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.95rem;">
+                <span style="color: var(--text-muted);">Allocated Budget:</span>
+                <strong id="displayBudgetAmount">₹0.00</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.95rem;">
+                <span style="color: var(--text-muted);">Total Expenses:</span>
+                <strong id="displayTotalSpent" style="color: var(--danger);">₹0.00</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-size: 1rem; border-top: 1px dashed var(--border); padding-top: 0.5rem;">
+                <span style="font-weight: 600;">Remaining Balance:</span>
+                <strong id="displayRemaining">₹0.00</strong>
+              </div>
+
+              <div class="progress-bar-container">
+                <div id="statusProgressBar" class="progress-bar-fill normal" style="width: 0%;"></div>
+              </div>
+              <div style="text-align: right; font-size: 0.85rem; font-weight: 600; color: var(--text-muted);" id="displayPercentage">
+                0% utilized
+              </div>
+            </div>
+
+            <div style="background: #f8fafc; border-radius: 8px; padding: 1rem; border: 1px solid var(--border); font-size: 0.8rem; line-height: 1.6;">
+              <strong>Threshold Rules:</strong><br>
+              🟢 <strong>Below 75%:</strong> Normal spending within safe parameters<br>
+              🟡 <strong>75% – 89%:</strong> Warning — Approaching limit<br>
+              🟠 <strong>90% – 100%:</strong> Critical — Budget exhaustion imminent<br>
+              🔴 <strong>Above 100%:</strong> Exceeded — Overspending violation!
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    async function loadBudgetStatus() {
+      const month = document.getElementById('budgetMonth').value;
+      const year = document.getElementById('budgetYear').value;
+      try {
+        const res = await fetch(`api/budget?month=${month}&year=${year}`);
+        const data = await res.json();
+        
+        document.getElementById('displayBudgetAmount').textContent = '₹' + Number(data.budgetAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2});
+        document.getElementById('displayTotalSpent').textContent = '₹' + Number(data.totalSpent || 0).toLocaleString('en-IN', {minimumFractionDigits: 2});
+        
+        const remaining = Number(data.remainingBudget || 0);
+        const remEl = document.getElementById('displayRemaining');
+        remEl.textContent = '₹' + remaining.toLocaleString('en-IN', {minimumFractionDigits: 2});
+        remEl.style.color = remaining < 0 ? 'var(--danger)' : 'var(--success)';
+
+        const usage = data.usagePercent || 0;
+        document.getElementById('displayPercentage').textContent = `${usage}% utilized`;
+
+        const bar = document.getElementById('statusProgressBar');
+        const badge = document.getElementById('badgeStatusIndicator');
+        const fillWidth = Math.min(usage, 100);
+        bar.style.width = fillWidth + '%';
+
+        const status = data.budgetStatus || 'Normal';
+        badge.textContent = status;
+        badge.className = 'badge badge-' + status.toLowerCase();
+        bar.className = 'progress-bar-fill ' + status.toLowerCase();
+
+        if (data.budgetAmount && data.budgetAmount > 0) {
+          document.getElementById('budgetAmount').value = data.budgetAmount;
+        }
+      } catch (e) {
+        console.error('Error loading budget:', e);
+      }
+    }
+
+    document.getElementById('budgetMonth').addEventListener('change', loadBudgetStatus);
+    document.getElementById('budgetYear').addEventListener('change', loadBudgetStatus);
+
+    document.getElementById('setBudgetForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const month = document.getElementById('budgetMonth').value;
+      const year = document.getElementById('budgetYear').value;
+      const amount = document.getElementById('budgetAmount').value;
+      const alertBox = document.getElementById('budgetAlert');
+
+      const params = new URLSearchParams();
+      params.append('month', month);
+      params.append('year', year);
+      params.append('amount', amount);
+
+      try {
+        const res = await fetch('api/budget', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: params.toString()
+        });
+        const data = await res.json();
+        if (data.success) {
+          alertBox.className = 'alert alert-success';
+          alertBox.textContent = 'Budget updated successfully!';
+          alertBox.style.display = 'block';
+          loadBudgetStatus();
+          setTimeout(() => { alertBox.style.display = 'none'; }, 3000);
+        } else {
+          alertBox.className = 'alert alert-danger';
+          alertBox.textContent = data.error || 'Failed to update budget';
+          alertBox.style.display = 'block';
+        }
+      } catch (err) {
+        alertBox.className = 'alert alert-danger';
+        alertBox.textContent = 'Network error while updating budget.';
+        alertBox.style.display = 'block';
+      }
+    });
+
+    loadBudgetStatus();
+  </script>
+</body>
+</html>
